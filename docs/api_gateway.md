@@ -79,3 +79,22 @@ API Gateway Management means the tools and systems used to:**
 - Control access
 
 It’s the administrative layer around APIs.
+
+## Example Platforms
+
+Here are popular API Gateway & Management solutions:
+
+- Google Cloud Platform – API Gateway & Apigee
+- Amazon Web Services – API Gateway
+- Microsoft Azure – Azure API Management
+- Kong – Kong Gateway
+- NGINX – NGINX API Gateway
+
+## Difference Between API Gateway and API Management
+
+| API Gateway                | API Management                       |
+| -------------------------- | ------------------------------------ |
+| Technical component        | Business + technical platform        |
+| Handles request routing    | Handles lifecycle of APIs            |
+| Focused on traffic control | Focused on governance                |
+| Runs at runtime            | Includes analytics, developer portal |
