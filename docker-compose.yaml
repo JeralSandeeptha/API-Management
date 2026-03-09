@@ -1,6 +1,9 @@
 version: "3.9"
 
 services:
+  #################################
+  ### Kong API Gateway Services ###
+  #################################
   kong-database:
     image: postgres:15
     container_name: kong-database
@@ -12,7 +15,6 @@ services:
       - "5432:5432"
     volumes:
       - kong_data:/var/lib/postgresql/data
-
   kong-migrations:
     image: kong:3.6
     command: kong migrations bootstrap
@@ -23,7 +25,6 @@ services:
       KONG_PG_HOST: kong-database
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
-
   kong:
     image: kong:3.6
     container_name: kong
@@ -47,6 +48,76 @@ services:
       - "8002:8002"   # Kong Manager GUI
     volumes:
       - kong_prefix_vol:/var/run/kong
+  
+  #################################
+  ##### Managed Services ##########
+  #################################
+  mongodb:
+    container_name: mongodb_prod_container
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "jeral"
+      MONGO_INITDB_ROOT_PASSWORD: "1234"
+  rabbitmq:
+    container_name: rabbitmq_prod_container
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "jeral"
+      RABBITMQ_DEFAULT_PASS: "1234"
+
+  #################################
+  ########## Services #############
+  #################################
+  users-service:
+    container_name: users_prod_container
+    image: jeralsandeeptha/sitecore-genai-users-main:45aad86748ae10559f35e37a39a184ab99441540
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - BASE_URL=http://localhost:5173
+      - DATABASE_URL=mongodb://jeral:1234@mongodb:27017/users_db?authSource=admin
+    depends_on:
+      - mongodb
+  ai-service:
+    container_name: ai_prod_container
+    image: jeralsandeeptha/sitecore-genai-ai-main:aa7ada62958a2f8c4cbf258bd329ea37f7ce8b10
+    restart: always
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - NODE_ENV=production
+      - BASE_URL=http://localhost:5173
+      - RABBITMQ_SERVICE_URL=amqp://jeral:1234@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+  code-generator-service:
+    container_name: code_generator_prod_container
+    image: jeralsandeeptha/sitecore-genai-code-generate-main:8fda94b79b3fb749b5301ca3b8c34e9dd6bd7380
+    restart: always
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+      - NODE_ENV=production
+      - BASE_URL=http://localhost:5173
+      - USER_SERVICE_URL=http://users-service:5001
+      - RABBITMQ_SERVICE_URL=amqp://jeral:1234@rabbitmq:5672
+      - DATABASE_URL=mongodb://jeral:1234@mongodb:27017/users_db?authSource=admin
+      - V0_API_KEY=test_key
+    depends_on:
+      - mongodb
+      - rabbitmq
 
 volumes:
   kong_data:
